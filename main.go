@@ -42,6 +42,7 @@ func init() {
 func main() {
 	//TODO: ratelimiting
 	router := http.NewServeMux()
+	router.HandleFunc("GET /{$}", handlers.VerificationHandler)
 	router.Handle("POST /{$}", handlers.OktaWebhookRouter(ConfFilePath))
 	authMiddlWere := middlewere.AuthMiddleware(token)
 
