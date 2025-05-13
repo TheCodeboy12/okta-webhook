@@ -78,6 +78,11 @@ func (p *Processor) userRemovedFromApplication() error {
 
 		// find the app
 		app := handledApps.Find(appTarget.ID)
+		if app == nil {
+			// slog.Error("App not found in conf file", "app_id", appTarget.ID)
+			return fmt.Errorf("app not found in conf file: %s", appTarget.ID)
+		}
+
 		if appTarget.ID == app.Id {
 			// prep the body for the request we are about to send
 			body, err := json.Marshal(&structs.ActionPayload{
