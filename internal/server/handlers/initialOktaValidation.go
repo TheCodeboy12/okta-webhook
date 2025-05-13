@@ -12,7 +12,7 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the verification challenge from the header
 	challenge := r.Header.Get("x-okta-verification-challenge")
 	if challenge == "" {
-		http.Error(w, "Verification: Missing x-okta-verification-challenge header", http.StatusBadRequest)
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		slog.Error("Verification: Missing x-okta-verification-challenge header")
 		return
 	}
@@ -23,7 +23,7 @@ func VerificationHandler(w http.ResponseWriter, r *http.Request) {
 	// Marshal the response to JSON
 	responseJSON, err := json.Marshal(response)
 	if err != nil {
-		http.Error(w, "Verification: Failed to marshal JSON response", http.StatusInternalServerError)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		slog.Error("Verification: Failed to marshal JSON response", "error", err)
 		return
 	}

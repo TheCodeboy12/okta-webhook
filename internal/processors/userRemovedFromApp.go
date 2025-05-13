@@ -12,6 +12,11 @@ import (
 )
 
 func UserRemovedFromApplication(event structs.Event) {
+	path := os.Getenv("CONF_FILE_PATH")
+	if path == "" {
+		slog.Error("CONF_FILE_PATH is not set")
+		return
+	}
 	// TODO: based on the app, do something
 	//Find what app were dealing with.
 	var userTarget structs.Target
@@ -29,7 +34,7 @@ func UserRemovedFromApplication(event structs.Event) {
 			break
 		}
 	}
-	f, err := os.ReadFile("/Users/gabriel.s/okta webhook/internal/processors/handledApps.json")
+	f, err := os.ReadFile(path)
 
 	if err != nil {
 		slog.Error("Failed to read handledApps.json", "error", err)
@@ -42,26 +47,31 @@ func UserRemovedFromApplication(event structs.Event) {
 		slog.Error("Failed to unmarshal handledApps.json", "error", err)
 		return
 	}
-	for _, app := range handledApps.Apps {
-		if appTarget.ID == app.Id {
 
-			body, err := json.Marshal(&structs.ActionPayload{
-				Type:    event.EventType,
-				UserKey: userTarget.AlternateID,
-			})
-			if err != nil {
-				slog.Error("Failed to marshal action", "error", err)
-				return
-			}
-			// time.Sleep(3 * time.Second)
-			// slog.Info("Got body", "body", string(body))
-			resps, err := http.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
-			if err != nil {
-				slog.Error("Failed to send action", "error", err)
-				return
-			}
-			defer resps.Body.Close()
-
-		}
+	app := handledApps.Find(appTarget.ID)
+	if app == nil {
+		slog.Error("App not found in applist", "app_id", appTarget.ID)
+		return
 	}
+	if appTarget.ID == app.Id {
+
+		body, err := json.Marshal(&structs.ActionPayload{
+			Type:    event.EventType,
+			UserKey: userTarget.AlternateID,
+		})
+		if err != nil {
+			slog.Error("Failed to marshal action", "error", err)
+			return
+		}
+		// time.Sleep(3 * time.Second)
+		// slog.Info("Got body", "body", string(body))
+		resps, err := http.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
+		if err != nil {
+			slog.Error("Failed to send action", "error", err)
+			return
+		}
+		defer resps.Body.Close()
+
+	}
+
 }
