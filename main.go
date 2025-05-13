@@ -10,8 +10,6 @@ import (
 	"github.com/theCodeBoy12/oktaWebhook/internal/server/middlewere"
 )
 
-var logger *slog.Logger
-
 var (
 	port         string = os.Getenv("PORT")
 	token        string = os.Getenv("TOKEN")
@@ -56,7 +54,7 @@ func main() {
 
 	slog.Info(fmt.Sprintf("Starting webhook on port %s", port))
 	if err := srv.ListenAndServe(); err != nil {
-		logger.Error("Failed to start webhook server", "error", err)
+		slog.Error("Failed to start webhook server", "error", err)
 		os.Exit(1)
 	}
 
