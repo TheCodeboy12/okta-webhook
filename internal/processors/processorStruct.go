@@ -39,7 +39,10 @@ func (p *Processor) Process() {
 		case oktaTypes.UserAddedtoApplication:
 
 		case oktaTypes.UserRemovedFromApplication:
-			p.userRemovedFromApplication()
+			if err := p.userRemovedFromApplication(); err != nil {
+				slog.Error("Failed to process event", "error", err)
+				return
+			}
 		default:
 			slog.Error("Invalid event type", "event_type", event.EventType)
 			return
@@ -48,8 +51,6 @@ func (p *Processor) Process() {
 }
 
 func (p *Processor) userRemovedFromApplication() error {
-	// TODO: based on the app, do something
-	//Find what app were dealing with.
 	var userTarget *structs.Target
 	var appTarget *structs.Target
 	events := p.EventHook.Data.Events
@@ -76,25 +77,24 @@ func (p *Processor) userRemovedFromApplication() error {
 		}
 
 		// find the app
-		for _, app := range handledApps.Apps {
-			if appTarget.ID == app.Id {
-				// prep the body for the request we are about to send
-				body, err := json.Marshal(&structs.ActionPayload{
-					Type:    event.EventType,
-					UserKey: userTarget.AlternateID,
-				})
-				if err != nil {
-					// slog.Error("Failed to marshal action", "error", err)
-					return fmt.Errorf("failed to marshal action: %w", err)
-				}
-
-				resps, err := http.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
-				if err != nil {
-					// slog.Error("Failed to send action", "error", err)
-					return fmt.Errorf("failed to send action: %w", err)
-				}
-				defer resps.Body.Close()
+		app := handledApps.Find(appTarget.ID)
+		if appTarget.ID == app.Id {
+			// prep the body for the request we are about to send
+			body, err := json.Marshal(&structs.ActionPayload{
+				Type:    event.EventType,
+				UserKey: userTarget.AlternateID,
+			})
+			if err != nil {
+				// slog.Error("Failed to marshal action", "error", err)
+				return fmt.Errorf("failed to marshal action: %w", err)
 			}
+
+			resps, err := http.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
+			if err != nil {
+				// slog.Error("Failed to send action", "error", err)
+				return fmt.Errorf("failed to send action: %w", err)
+			}
+			defer resps.Body.Close()
 		}
 	}
 	return nil
