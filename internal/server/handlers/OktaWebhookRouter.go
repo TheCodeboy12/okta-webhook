@@ -39,7 +39,7 @@ func OktaWebhookRouter(ConfFilePath string) http.Handler {
 			ConfFilePath: ConfFilePath,
 		}
 		// the event poster did its job and were now switching to handling the request solely on the server
-		go h.Process()
+		h.Process()
 		// so we reply back to it and terminate the connection
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
