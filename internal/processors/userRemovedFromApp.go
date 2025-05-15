@@ -2,15 +2,17 @@ package processors
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 
 	oktaTypes "github.com/theCodeBoy12/oktaWebhook/internal/constants"
 	"github.com/theCodeBoy12/oktaWebhook/internal/server/structs"
+	"google.golang.org/api/idtoken"
 )
 
 func (p *Processor) userRemovedFromApplication() error {
+	ctx := context.Background()
 	var userTarget *structs.Target
 	var appTarget *structs.Target
 	events := p.EventHook.Data.Events
@@ -53,8 +55,13 @@ func (p *Processor) userRemovedFromApplication() error {
 				// slog.Error("Failed to marshal action", "error", err)
 				return fmt.Errorf("failed to marshal action: %w", err)
 			}
+			client, err := idtoken.NewClient(ctx, app.HandlerURL)
+			if err != nil {
+				// slog.Error("Failed to create client", "error", err)
+				return fmt.Errorf("failed to create client: %w", err)
+			}
 
-			resps, err := http.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
+			resps, err := client.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				// slog.Error("Failed to send action", "error", err)
 				return fmt.Errorf("failed to send action: %w", err)
