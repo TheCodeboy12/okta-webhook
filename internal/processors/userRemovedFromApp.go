@@ -55,12 +55,13 @@ func (p *Processor) userRemovedFromApplication() error {
 				// slog.Error("Failed to marshal action", "error", err)
 				return fmt.Errorf("failed to marshal action: %w", err)
 			}
+			// Create an HTTP client with ADC credentials built into it.
+			// This is in order to post to a cloud run service located at the handler URL.
 			client, err := idtoken.NewClient(ctx, app.HandlerURL)
 			if err != nil {
 				// slog.Error("Failed to create client", "error", err)
 				return fmt.Errorf("failed to create client: %w", err)
 			}
-
 			resps, err := client.Post(app.HandlerURL, "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				// slog.Error("Failed to send action", "error", err)
